@@ -5,8 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{% block title %}{{ title|default:"Обзор" }} · OCTAX{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/ui.css' %}
-  <link rel="stylesheet" href="{% static 'css/octax.css' %}">">
+  <link rel="stylesheet" href="{% static 'css/octax.css' %}?v=15">
   <script src="{% static 'js/theme.js' %}"></script>
   <script defer src="{% static 'js/ui.js' %}?v=2"></script>
 </head>
@@ -15,8 +14,8 @@
 <a class="skip" href="#main">Перейти к содержимому</a>
 {% if user.is_authenticated %}
 <aside class="sidebar" id="sidebar">
-  <a class="brand" href="{% url 'dashboard' %}"><span class="brand-mark">O</span><span>OCT<span class="brand-accent">AX</span><small>BUSINESS WORKSPACE</small></span></a>
-  <div class="workspace"><span class="workspace-icon">{{ user.username|slice:":1"|upper }}</span><div>Моё пространство<small>Личная CRM</small></div><span class="online-dot"></span></div>
+  <a class="brand" href="{% url 'dashboard' %}"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-width="4"/><path d="M11 25c7-1 8-13 18-12M11 29c8 0 11-13 18-13" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span><span>Octax<small>Dashboard</small></span></a>
+  <form class="side-search" action="{% url 'clients_list' %}" method="get"><label for="global-search">Поиск клиентов</label><input id="global-search" name="q" placeholder="Поиск клиентов..." aria-label="Поиск клиентов"></form>
   {% if user.client_portal %}
   <p class="nav-caption">КАБИНЕТ КЛИЕНТА</p>
   <nav aria-label="Кабинет клиента">
@@ -25,19 +24,34 @@
     <a href="{% url 'portal_request_create' 'task' %}">Запросить задачу</a>
   </nav>
   {% else %}
-  <p class="nav-caption">РАБОЧЕЕ ПРОСТРАНСТВО</p>
-  <nav aria-label="Главная навигация">
-    <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>{% include 'crm/icon.html' with name='grid' %}Обзор</a>
-    <a href="{% url 'clients_list' %}" {% if kind == 'clients' %}aria-current="page"{% endif %}>{% include 'crm/icon.html' with name='users' %}Клиенты</a>
-    <a href="{% url 'deals_list' %}" {% if kind == 'deals' %}aria-current="page"{% endif %}>{% include 'crm/icon.html' with name='briefcase' %}Сделки</a>
-    <a href="{% url 'tasks_list' %}" {% if kind == 'tasks' %}aria-current="page"{% endif %}>{% include 'crm/icon.html' with name='check' %}Задачи</a>
-    <a href="{% url 'agile_projects' %}" {% if request.path|slice:":7" == "/agile/" %}aria-current="page"{% endif %}>▥ Agile · ЛЗ 9</a>
-    <a href="{% url 'delivery_dashboard' %}" {% if request.path|slice:":10" == "/delivery/" %}aria-current="page"{% endif %}>◈ CI/CD · ЛЗ 10</a>
-    <a href="{% url 'finance_dashboard' %}" {% if request.resolver_match.url_name == 'finance_dashboard' %}aria-current="page"{% endif %}>₸ Финансы · ЛЗ 8</a>
-    <a href="{% url 'finance_sla' %}" {% if request.resolver_match.url_name == 'finance_sla' %}aria-current="page"{% endif %}>◉ SLA и качество</a>
+  <nav class="octax-nav" aria-label="Навигация OCTAX">
+    <a class="octax-nav-overview" href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>{% include 'crm/icon.html' with name='grid' %}Обзор</a>
+    <details class="octax-nav-group" open>
+      <summary>Рабочее пространство</summary>
+      <a href="{% url 'sales_list' 'leads' %}" {% if request.path == '/workspace/leads/' %}aria-current="page"{% endif %}><span class="octax-nav-symbol">◈</span>Лиды</a>
+      <a href="{% url 'sales_list' 'companies' %}" {% if request.path == '/workspace/companies/' %}aria-current="page"{% endif %}><span class="octax-nav-symbol">▥</span>Компании</a>
+      <a href="{% url 'clients_list' %}" {% if kind == 'clients' %}aria-current="page"{% endif %}>{% include 'crm/icon.html' with name='users' %}Контакты и клиенты</a>
+      <a href="{% url 'deals_list' %}" {% if kind == 'deals' %}aria-current="page"{% endif %}>{% include 'crm/icon.html' with name='briefcase' %}Сделки и воронка</a>
+      <a href="{% url 'tasks_list' %}" {% if kind == 'tasks' %}aria-current="page"{% endif %}>{% include 'crm/icon.html' with name='check' %}Задачи и активности</a>
+      <a href="{% url 'agile_projects' %}" {% if request.path|slice:":7" == "/agile/" %}aria-current="page"{% endif %}><span class="octax-nav-symbol">▦</span>Проекты</a>
+    </details>
+    <details class="octax-nav-group" open>
+      <summary>Аналитика</summary>
+      <a href="{% url 'finance_dashboard' %}" {% if request.resolver_match.url_name == 'finance_dashboard' %}aria-current="page"{% endif %}><span class="octax-nav-symbol">₸</span>Финансовые отчёты</a>
+      <a href="{% url 'finance_sla' %}" {% if request.resolver_match.url_name == 'finance_sla' %}aria-current="page"{% endif %}><span class="octax-nav-symbol">◎</span>Качество сервиса</a>
+    </details>
+    <details class="octax-nav-group">
+      <summary>Тестирование и качество</summary>
+      <a href="{% url 'delivery_dashboard' %}" {% if request.path|slice:":10" == "/delivery/" %}aria-current="page"{% endif %}><span class="octax-nav-symbol">◇</span>QA / CI</a>
+    </details>
+    <div class="octax-nav-future" aria-label="Планируемые разделы">
+      <span>Следующие модули</span>
+      <p>Входящие · Кампании · Документы</p>
+      <small>Добавим после разработки моделей и тестов</small>
+    </div>
   </nav>
   {% endif %}
-  <div class="sidebar-bottom"><div class="side-note"><span class="online-dot"></span>Всё важное — рядом<p>От первого знакомства<br>до успешной сделки.</p></div><button class="theme-toggle ghost" type="button">{% include 'crm/icon.html' with name='moon' %}<span>Сменить тему</span></button></div>
+  <div class="sidebar-bottom"><button class="theme-toggle ghost" type="button">{% include 'crm/icon.html' with name='moon' %}<span>Сменить тему</span></button></div>
 </aside>
 <button class="sidebar-backdrop" type="button" aria-label="Закрыть меню" hidden></button>
 {% endif %}
@@ -46,7 +60,7 @@
   <div class="topbar-inner">
     {% if user.is_authenticated %}
     <button id="menu-toggle" class="icon-button mobile-only" aria-label="Открыть меню" aria-expanded="false" aria-controls="sidebar">{% include 'crm/icon.html' with name='menu' %}</button>
-    <span class="breadcrumb">Рабочее пространство <span>/</span> <b>{{ title|default:"Обзор" }}</b></span>
+    <span class="breadcrumb"><b>{{ title|default:"Обзор" }}</b></span>
     {% if user.client_portal %}
     <div class="top-actions">
       <a class="button small" href="{% url 'portal_request_create' 'deal' %}">Новая заявка</a>
@@ -54,7 +68,7 @@
     </div>
     {% else %}
     <div class="top-actions">
-      <details class="dropdown"><summary class="button small">+ Создать</summary><div class="dropdown-content"><a href="{% url 'clients_create' %}">Клиента</a><a href="{% url 'deals_create' %}">Сделку</a><a href="{% url 'tasks_create' %}">Задачу</a></div></details>
+      <details class="dropdown"><summary class="button small">+ Создать</summary><div class="dropdown-content"><a href="{% url 'clients_create' %}">Клиента</a><a href="{% url 'deals_create' %}">Сделку</a><a href="{% url 'tasks_create' %}">Задачу</a><a href="{% url 'sales_create' 'leads' %}">Лида</a><a href="{% url 'sales_create' 'companies' %}">Компанию</a></div></details>
       {% if user.is_staff %}<a class="button small secondary" href="{% url 'manage_requests' %}">Заявки клиентов</a>{% endif %}
       <details class="dropdown profile"><summary aria-label="Меню профиля"><span class="mini-avatar">{{ user.username|slice:":1"|upper }}</span><span class="profile-name">{{ user.username }}</span></summary><div class="dropdown-content"><strong>{{ user.username }}</strong><small>Ваш аккаунт</small><form action="{% url 'logout' %}" method="post">{% csrf_token %}<button class="ghost">Выйти из аккаунта</button></form></div></details>
     </div>
@@ -66,7 +80,7 @@
   <div class="toast-stack" aria-live="polite">{% for message in messages %}<div class="notice"><span>{{ message }}</span><button type="button" class="dismiss icon-button" aria-label="Закрыть уведомление">×</button></div>{% endfor %}</div>
   {% block content %}{% endblock %}
 </main>
-<footer class="container"><span>OCTAX <b>·</b> Ваши отношения с клиентами</span><span>Создано для малого бизнеса</span></footer>
+<footer class="container"><span>OCTAX <b>·</b> Business Operating System</span><span>Business management platform</span></footer>
 </div>
 <dialog id="client-drawer" class="drawer" aria-label="Карточка клиента">
   <div class="drawer-top"><span class="eyebrow">ПРОФИЛЬ КЛИЕНТА</span><button class="icon-button drawer-close" aria-label="Закрыть карточку">×</button></div>

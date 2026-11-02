@@ -16,7 +16,7 @@ from .metrics import calculate,cumulative_flow
 def own_project(request,pk): return get_object_or_404(Project,pk=pk,owner=request.user)
 @login_required
 def projects(request):
-    return render(request,'agile/projects.html',{'title':'Agile · ЛЗ 9','projects':Project.objects.filter(owner=request.user).annotate(item_count=Count('items'))})
+    return render(request,'agile/projects.html',{'title':'Agile','projects':Project.objects.filter(owner=request.user).annotate(item_count=Count('items'))})
 @login_required
 def new_project(request):
     form=ProjectForm(request.POST or None)
@@ -31,7 +31,7 @@ def board(request,pk):
     sprint=next((s for s in sprints if str(s.pk)==selected),None) if selected else (sprints[-1] if sprints else None)
     items=project.items.filter(sprint=sprint) if sprint else project.items.filter(sprint__isnull=True)
     columns=[{'key':key,'name':name,'items':list(items.filter(status=key))} for key,name in WorkItem.STATES]
-    return render(request,'agile/board.html',{'title':'Kanban · ЛЗ 9','project':project,'sprints':sprints,'sprint':sprint,'columns':columns})
+    return render(request,'agile/board.html',{'title':'Kanban','project':project,'sprints':sprints,'sprint':sprint,'columns':columns})
 @login_required
 def new_sprint(request,pk):
     project=own_project(request,pk);form=SprintForm(request.POST or None)
@@ -79,7 +79,7 @@ def move_item(request,pk,iid):
 def report(request,pk):
     project=own_project(request,pk)
     rows=[{'sprint':s,'metric':calculate(s),'flow_json':json.dumps(cumulative_flow(s))} for s in project.sprints.order_by('start_date')]
-    return render(request,'agile/report.html',{'title':'Отчёт спринтов · ЛЗ 9','project':project,'rows':rows,'flow_json':json.dumps([{'sprint':row['sprint'].name,'flow':row['flow']} for row in rows],ensure_ascii=False)})
+    return render(request,'agile/report.html',{'title':'Отчёт спринтов','project':project,'rows':rows,'flow_json':json.dumps([{'sprint':row['sprint'].name,'flow':row['flow']} for row in rows],ensure_ascii=False)})
 @login_required
 def report_csv(request,pk):
     project=own_project(request,pk)

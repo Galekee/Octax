@@ -1,12 +1,10 @@
 import csv
 from datetime import date
 from decimal import Decimal
-from pathlib import Path
 
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
-from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -20,13 +18,6 @@ SLO_SCENARIOS = [
     {'name': 'Открытие клиентов', 'short': 'Список клиентов', 'description': 'HTTP без ошибок, ответ не дольше одной секунды', 'slo': Decimal('99.0'), 'sla': Decimal('98.5'), 'color': 'blue'},
     {'name': 'Сохранение сделки', 'short': 'Сохранение', 'description': 'Успешные сохранения корректно заполненных сделок', 'slo': Decimal('99.5'), 'sla': Decimal('99.0'), 'color': 'green'},
 ]
-DOCS = {
-    'sow': ('LAB8_SOW.md', 'Statement of Work · SmartCRM'),
-    'sla': ('LAB8_SLA.md', 'SLA / SLO · SmartCRM'),
-    'budget': ('lab8_budget.xlsx', 'Финансовая модель · Excel'),
-    'guide': ('LAB8_BUDGET.md', 'Пояснение к финансовой модели'),
-}
-
 
 def employee_only(request):
     return not hasattr(request.user, 'portal_profile') and not getattr(request.user, 'client_portal', False)
@@ -74,7 +65,7 @@ def dashboard(request):
                        'a_height': float(row['actual'] / max_value * 100)})
     percent_used = float(actual / planned * 100) if planned > 0 else 0
     context = {
-        'title': 'Финансы · Лабораторная 8', 'entries': entries.order_by('-month', 'category'),
+        'title': 'Финансы', 'entries': entries.order_by('-month', 'category'),
         'year': year, 'planned': planned, 'actual': actual, 'variance': variance,
         'months': months, 'users': users, 'monthly_average': monthly_average,
         'per_user': per_user, 'percent_used': percent_used,
@@ -99,22 +90,9 @@ def sla_dashboard(request):
             'sla_errors': int(Decimal(volume) * (100 - item['sla']) / Decimal(100)),
         })
     return render(request, 'finance/sla.html', {
-        'title': 'SLA и качество · Лабораторная 8', 'scenarios': scenarios,
+        'title': 'SLA и качество', 'scenarios': scenarios,
         'volume': volume, 'window': '30 дней',
     })
-
-
-@login_required
-def download_doc(request, slug):
-    if not employee_only(request):
-        return HttpResponseForbidden('Раздел доступен только сотрудникам')
-    if slug not in DOCS:
-        raise Http404('Документ не найден')
-    filename, _ = DOCS[slug]
-    path = Path(settings.BASE_DIR) / 'docs' / filename
-    if not path.is_file():
-        raise Http404('Документ отсутствует')
-    return FileResponse(path.open('rb'), as_attachment=True, filename=filename)
 
 
 @login_required
@@ -160,3 +138,20 @@ def entry_delete(request, pk):
         entry.delete()
         return redirect('finance_dashboard')
     return render(request, 'finance/delete.html', {'title': 'Удалить статью', 'entry': entry})
+
+
+@login_required
+def document_download(request, slug):
+    """Small, explicitly allowlisted document endpoint; never accept file paths."""
+    from django.http import Http404
+    if slug != 'sow':
+        raise Http404('Документ не найден')
+    response = HttpResponse(
+        'OCTAX — шаблон технического задания\n\n'
+        'Проект: __________________\n'
+        'Объём работ: __________________\n'
+        'Сроки: __________________\n',
+        content_type='text/plain; charset=utf-8',
+    )
+    response['Content-Disposition'] = 'attachment; filename="octax-sow-template.txt"'
+    return response

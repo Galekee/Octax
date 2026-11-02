@@ -112,7 +112,30 @@ class TaskForm(forms.ModelForm):
         widgets = {'due_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})}
 
 
+def registration_today():
+    """Clock seam for deterministic boundary tests without patching datetime.date."""
+    from datetime import date
+    return date.today()
+
+
 class ClientRegistrationForm(forms.Form):
+    birth_date = forms.DateField(
+        label='Дата рождения',
+        widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+        input_formats=['%Y-%m-%d'],
+        help_text='Регистрация доступна с 18 до 65 лет включительно.',
+    )
+
+    def clean_birth_date(self):
+        birth_date = self.cleaned_data['birth_date']
+        today = registration_today()
+        age = today.year - birth_date.year - (
+            (today.month, today.day) < (birth_date.month, birth_date.day)
+        )
+        if age < 18 or age > 65:
+            raise forms.ValidationError('Возраст должен быть от 18 до 65 лет включительно.')
+        return birth_date
+
     username = forms.CharField(label='Имя пользователя', max_length=150)
     email = forms.EmailField(label='Email')
     full_name = forms.CharField(label='Ваше имя', max_length=150)
@@ -157,6 +180,7 @@ class ClientRegistrationForm(forms.Form):
         RegistrationRequest.objects.create(
             user=user,
             full_name=self.cleaned_data['full_name'],
+            birth_date=self.cleaned_data['birth_date'],
             company=self.cleaned_data['company'],
             phone=self.cleaned_data['phone'],
         )

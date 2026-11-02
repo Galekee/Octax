@@ -74,11 +74,16 @@
       + (digitsBeforeCaret >= 4 ? 1 : 0);
     input.setSelectionRange(caretPosition, caretPosition);
   }));
-  document.querySelectorAll('.record-form').forEach(form => form.addEventListener('submit', () => {
-    const button = form.querySelector('button[type="submit"]'); button.disabled = true; button.textContent = 'Сохраняем…';
+  document.querySelectorAll('.record-form').forEach(form => form.addEventListener('submit', event => {
+    if (!form.checkValidity()) return;
+    const button = event.submitter || form.querySelector('button[type="submit"]');
+    if (!button || button.dataset.submitting === 'true') return;
+    button.dataset.originalLabel = button.textContent;
+    button.dataset.submitting = 'true';
+    button.disabled = true; button.textContent = 'Сохраняем…';
   }));
   window.addEventListener('pageshow', () => {
-    document.querySelectorAll('.record-form button[type="submit"]').forEach(button => { button.disabled = false; button.textContent = 'Сохранить'; });
+    document.querySelectorAll('.record-form button[type="submit"]').forEach(button => { button.disabled = false; button.textContent = button.dataset.originalLabel || 'Сохранить'; delete button.dataset.submitting; });
   });
 
   const drawer = document.querySelector('#client-drawer');

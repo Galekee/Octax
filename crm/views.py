@@ -57,23 +57,41 @@ def staff_user_required(view):
 
 @crm_user_required
 def dashboard(request):
+    """Dashboard metrics are scoped to the signed-in user and selected period."""
+    period = request.GET.get('period', 'all')
+    if period not in {'all', '7', '30', '90'}:
+        period = 'all'
+    overview = request.GET.get('overview', 'business')
+    if overview not in {'business', 'sales', 'tasks'}:
+        overview = 'business'
+    since = timezone.now() - timedelta(days=int(period)) if period != 'all' else None
+    clients = Client.objects.filter(owner=request.user)
     deals = Deal.objects.filter(owner=request.user)
-    tasks = Task.objects.filter(owner=request.user, is_completed=False)
+    all_open_tasks = Task.objects.filter(owner=request.user, is_completed=False)
+    tasks = all_open_tasks
+    if since is not None:
+        clients = clients.filter(created_at__gte=since)
+        deals = deals.filter(created_at__gte=since)
+        tasks = tasks.filter(created_at__gte=since)
     today = timezone.localdate()
     funnel_counts = dict(deals.values_list('status').annotate(count=Count('pk')))
+    won = deals.filter(status='won')
+    total_deals = max(1, deals.count())
     return render(request, 'crm/dashboard.html', {
-        'client_count': Client.objects.filter(owner=request.user).count(),
-        'deal_count': Deal.objects.filter(owner=request.user, status__in=['new', 'in_progress']).count(),
-        'task_count': Task.objects.filter(owner=request.user, is_completed=False).count(),
-        'revenue': Deal.objects.filter(owner=request.user, status='won').aggregate(total=Sum('amount'))['total'] or 0,
-        'won_count': deals.filter(status='won').count(),
-        'today_count': tasks.filter(due_date=today).count(),
-        'overdue_count': tasks.filter(due_date__lt=today).count(),
-        'upcoming_tasks': tasks.order_by(F('due_date').asc(nulls_last=True), '-created_at')[:5],
+        'period': period,
+        'overview': overview,
+        'client_count': clients.count(),
+        'deal_count': deals.filter(status__in=['new', 'in_progress']).count(),
+        'task_count': tasks.count(),
+        'revenue': won.aggregate(total=Sum('amount'))['total'] or 0,
+        'won_count': won.count(),
+        'today_count': all_open_tasks.filter(due_date=today).count(),
+        'overdue_count': all_open_tasks.filter(due_date__lt=today).count(),
+        'upcoming_tasks': all_open_tasks.order_by(F('due_date').asc(nulls_last=True), '-created_at')[:5],
         'recent_deals': deals.select_related('client')[:5],
         'funnel': [
             {'label': label, 'status': status, 'count': funnel_counts.get(status, 0),
-             'width': round(funnel_counts.get(status, 0) / max(1, sum(funnel_counts.values())) * 100)}
+             'width': round(funnel_counts.get(status, 0) / total_deals * 100)}
             for status, label in Deal.Status.choices
         ],
         'today': today,

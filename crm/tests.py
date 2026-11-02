@@ -120,7 +120,7 @@ class CRMTests(TestCase):
         self.client.logout()
         response = self.client.post('/register/', {
             'username': 'newclient', 'email': 'client@example.com', 'full_name': 'New Client',
-            'company': 'Client Co', 'phone': '123',
+            'company': 'Client Co', 'phone': '123', 'birth_date': '2000-01-01',
             'password1': 'Strong-pass-2026!', 'password2': 'Strong-pass-2026!',
         })
         self.assertRedirects(response, '/accounts/login/')

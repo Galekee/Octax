@@ -110,7 +110,7 @@ class ClientCardTests(TestCase):
         self.assertEqual(self.client.get('/clients/?page=nonsense').status_code, 200)
 
     def test_dashboard_onboarding_and_real_totals(self):
-        self.assertContains(self.client.get('/'), 'Большие дела начинаются')
+        self.assertContains(self.client.get('/'), 'Все ключевые показатели вашего бизнеса')
         obj = self.add_client()
         Deal.objects.create(owner=self.user, client=obj, title='Success', amount='50000', status='won')
         Deal.objects.create(owner=self.other, client=obj, title='Hidden', amount='9000', status='won')

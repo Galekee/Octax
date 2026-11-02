@@ -6,10 +6,10 @@ from urllib.request import Request, urlopen
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-REPO='szdkvab-maker/smart-crm-system'
+REPO='Galekee/Octax'
 def github_json(endpoint):
     url='https://api.github.com/repos/'+REPO+'/'+endpoint
-    headers={'Accept':'application/vnd.github+json','User-Agent':'SmartCRM-Lab10'}
+    headers={'Accept':'application/vnd.github+json','User-Agent':'Octax-QA'}
     if os.environ.get('GITHUB_TOKEN'):
         headers['Authorization']='Bearer '+os.environ['GITHUB_TOKEN']
     with urlopen(Request(url,headers=headers),timeout=6) as response:
@@ -17,7 +17,7 @@ def github_json(endpoint):
 
 @login_required
 def dashboard(request):
-    data={'title':'CI/CD · ЛЗ 10','repo':REPO,'error':'','workflow_runs':[],'deploy_count':None,'lead_time':None,'change_failure_rate':None,'mttr':None}
+    data={'title':'QA и CI/CD','repo':REPO,'error':'','workflow_runs':[],'deploy_count':None,'lead_time':None,'change_failure_rate':None,'mttr':None}
     try:
         workflows=github_json('actions/runs?per_page=30')
         runs=workflows.get('workflow_runs',[])

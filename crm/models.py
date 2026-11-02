@@ -59,6 +59,7 @@ class RegistrationRequest(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="registration_request")
     full_name = models.CharField("Имя", max_length=150)
+    birth_date = models.DateField("Дата рождения", null=True, blank=True)
     company = models.CharField("Компания", max_length=150, blank=True)
     phone = models.CharField("Телефон", max_length=30, blank=True)
     status = models.CharField("Статус", max_length=10, choices=Status.choices, default=Status.PENDING)
