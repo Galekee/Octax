@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="fin-page">
+  <header class="fin-page-head">
+    <div><p class="eyebrow">SMARTCRM / УПРАВЛЕНИЕ ПРОЕКТОМ / ЛЗ №8</p><h1>Финансовый обзор <span class="fin-spark">✦</span></h1><p class="muted">Бюджет, фактические расходы и юнит-экономика проекта в одном пространстве.</p></div>
+    <div class="fin-head-actions"><a class="button secondary" href="{% url 'finance_export' %}?year={{ year }}" title="Экспортировать данные расходов в CSV">↓ Экспорт CSV</a><a class="button" href="{% url 'finance_new' %}">＋ Добавить статью</a></div>
+  </header>
+  <div class="fin-tabs" aria-label="Разделы лабораторной"><a class="selected" aria-current="page" href="{% url 'finance_dashboard' %}">▦ Обзор бюджета</a><a href="{% url 'finance_sla' %}">◉ SLA и качество</a><a href="#fin-docs">▤ Документы</a></div>
+
+  <form class="fin-toolbar" method="get">
+    <div><span class="fin-muted-kicker">ПЕРИОД ОТЧЁТА</span><label for="fin-year">Финансовый год</label></div>
+    <input type="number" id="fin-year" name="year" min="2000" max="2100" value="{{ year }}">
+    <div><span class="fin-muted-kicker">РАСЧЁТНАЯ МОДЕЛЬ</span><label for="fin-users">Активных пользователей</label></div>
+    <input type="number" id="fin-users" name="users" min="1" max="1000000" value="{{ users }}">
+    <button type="submit" class="button secondary">Пересчитать ↗</button>
+  </form>
+
+  <section class="fin-metrics" aria-label="Главные показатели бюджета">
+    <article class="fin-stat fin-stat-primary"><div class="fin-stat-top"><span>Плановый бюджет</span><span class="fin-stat-icon">↗</span></div><strong>{{ planned|floatformat:0 }} <small>₸</small></strong><p>Сумма плана за {{ year }} год</p><div class="fin-stat-line"></div></article>
+    <article class="fin-stat"><div class="fin-stat-top"><span>Фактические расходы</span><span class="fin-stat-icon fin-stat-icon-amber">◫</span></div><strong>{{ actual|floatformat:0 }} <small>₸</small></strong><div class="fin-progress" role="progressbar" aria-label="Доля расходов от бюджета" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent_bar|floatformat:0 }}"><span style="width:{{ percent_bar|stringformat:'.2f' }}%"></span></div><p>{% if planned > 0 %}Использовано {{ percent_used|floatformat:1 }}% бюджета{% else %}Добавьте плановые расходы{% endif %}</p></article>
+    <article class="fin-stat"><div class="fin-stat-top"><span>Остаток бюджета</span><span class="fin-stat-icon fin-stat-icon-green">◎</span></div><strong class="{% if over_budget %}fin-negative{% endif %}">{{ variance|floatformat:0 }} <small>₸</small></strong><p>{% if over_budget %}<span class="fin-negative">Превышен план</span>{% else %}План минус фактические расходы{% endif %}</p><div class="fin-tag">{{ entry_count }} статей бюджета</div></article>
+  </section>
+
+  <div class="fin-main-grid">
+    <section class="fin-panel fin-chart-card" aria-labelledby="fin-chart-title">
+      <div class="fin-section-top"><div><p class="fin-muted-kicker">АНАЛИТИКА</p><h2 id="fin-chart-title">Динамика расходов</h2><p class="muted">Помесячное сравнение плана и факта · {{ year }}</p></div><div class="fin-legend"><span><i class="fin-dot plan"></i>План</span><span><i class="fin-dot actual"></i>Факт</span></div></div>
+      <div class="fin-chart" role="img" aria-label="Столбчатый график плановых и фактических расходов по двенадцати месяцам; значения также доступны в таблице ниже">
+        {% for month in months %}<div class="fin-chart-slot"><div class="fin-bar-pair"><div class="fin-bar fin-bar-plan" style="height:{{ month.p_height|stringformat:'.2f' }}%" title="{{ month.name }}: план {{ month.planned|floatformat:0 }} ₸"></div><div class="fin-bar fin-bar-actual" style="height:{{ month.a_height|stringformat:'.2f' }}%" title="{{ month.name }}: факт {{ month.actual|floatformat:0 }} ₸"></div></div><span>{{ month.short }}</span></div>{% endfor %}
+      </div>
+      <p class="fin-chart-foot">График строится автоматически на основании ваших записей. {% if not has_data %}Пока данных нет — добавьте первую статью бюджета.{% endif %}</p>
+    </section>
+    <section class="fin-panel fin-unit-card" aria-labelledby="fin-unit-title"><p class="fin-muted-kicker">UNIT ECONOMICS</p><h2 id="fin-unit-title">Стоимость на пользователя</h2><p class="muted">По плановому бюджету, в среднем за месяц</p><div class="fin-unit-number">{{ per_user|floatformat:0 }} <span>₸ / мес.</span></div><div class="fin-unit-divider"></div><div class="fin-unit-row"><span>Активные пользователи</span><b>{{ users }}</b></div><div class="fin-unit-row"><span>Среднемесячный бюджет</span><b>{{ monthly_average|floatformat:0 }} ₸</b></div><div class="fin-unit-row"><span>Период</span><b>12 месяцев</b></div><div class="fin-unit-callout">ⓘ Количество пользователей — ваше предположение. Меняйте его в фильтре сверху.</div><a class="fin-inline-link" href="{% url 'finance_document' 'budget' %}">Расчётная Excel-модель ↗</a></section>
+  </div>
+
+  <section class="fin-panel fin-monthly" aria-labelledby="fin-monthly-title"><div class="fin-section-top"><div><p class="fin-muted-kicker">ПОДРОБНОСТИ</p><h2 id="fin-monthly-title">Бюджет на 12 месяцев</h2></div><span class="fin-tag">KZT / тенге</span></div><div class="lab8-table"><table><thead><tr><th>Месяц</th><th>План, ₸</th><th>Факт, ₸</th><th>Отклонение</th></tr></thead><tbody>{% for m in months %}<tr><td><b>{{ m.name }}</b></td><td>{{ m.planned|floatformat:0 }}</td><td>{{ m.actual|floatformat:0 }}</td><td>{% if m.actual > m.planned %}<span class="fin-negative">Перерасход</span>{% elif m.planned > m.actual %}<span class="fin-positive">В пределах плана</span>{% else %}<span class="muted">Без отклонения</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div></section>
+
+  <section class="fin-panel" aria-labelledby="fin-entries-title"><div class="fin-section-top"><div><p class="fin-muted-kicker">РЕЕСТР</p><h2 id="fin-entries-title">Статьи бюджета</h2></div><a class="button small secondary" href="{% url 'finance_new' %}">＋ Новая статья</a></div><div class="lab8-table"><table><thead><tr><th>Период</th><th>Категория / описание</th><th>План</th><th>Факт</th><th>Управление</th></tr></thead><tbody>{% for e in entries %}<tr><td>{{ e.month|date:'m.Y' }}</td><td><b>{{ e.category }}</b>{% if e.description %}<small class="fin-table-description">{{ e.description }}</small>{% endif %}</td><td>{{ e.planned|floatformat:0 }} ₸</td><td>{{ e.actual|floatformat:0 }} ₸</td><td class="fin-table-actions"><a href="{% url 'finance_edit' e.pk %}">Изменить</a><a class="fin-negative" href="{% url 'finance_delete' e.pk %}">Удалить</a></td></tr>{% empty %}<tr><td colspan="5"><div class="fin-empty"><strong>Пока нет записей о расходах</strong><p class="muted">Добавьте категорию, месяц, план и факт — панели и графики сразу обновятся.</p><a class="button small" href="{% url 'finance_new' %}">Добавить первую статью</a></div></td></tr>{% endfor %}</tbody></table></div></section>
+
+  <section class="fin-doc-grid" id="fin-docs"><div><p class="fin-muted-kicker">ПАКЕТ ДЛЯ ЗАЩИТЫ</p><h2>Документы лабораторной №8</h2><p class="muted">SoW, SLA/SLO, финансовая модель и пояснения. Загрузите файлы для преподавателя.</p></div><div class="fin-doc-links"><a href="{% url 'finance_document' 'sow' %}">▤ <span>Statement of Work <small>Границы, результаты, приёмка</small></span>↓</a><a href="{% url 'finance_document' 'sla' %}">◉ <span>SLA / SLO <small>Три сценария и error budget</small></span>↓</a><a href="{% url 'finance_document' 'budget' %}">▦ <span>Бюджет · Excel <small>12 месяцев, юнит-экономика, три варианта размещения</small></span>↓</a></div></section>
+</div>
+{% endblock %}

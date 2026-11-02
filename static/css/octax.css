@@ -1,0 +1,10 @@
+/* OCTAX 1.0: clean light-first visual system, compatible with existing Django templates. */
+:root{--primary:#2563eb;--primary-hover:#1d4ed8;--primary-soft:#eaf1ff;--bg:#f6f8fc;--surface:#fff;--text:#17253e;--muted:#6c7a92;--border:#e4eaf3;--radius-md:12px;--radius-lg:18px;--shadow-sm:0 3px 14px #10254a0a;--shadow-md:0 16px 40px #10254a12}
+:root[data-theme=dark]{--bg:#0f1726;--surface:#182337;--text:#f0f5ff;--muted:#a7b7cf;--border:#2a3b55;--primary:#79a8ff;--primary-hover:#a6c6ff;--primary-soft:#223a61}
+.sidebar{background:var(--surface)!important;border-right:1px solid var(--border)!important;box-shadow:none!important}
+.brand{letter-spacing:-.035em;font-weight:850!important}.brand-mark{background:#2563eb!important;color:white!important;border-radius:12px!important}.brand-accent{color:#2563eb!important}
+.sidebar nav a{border-radius:11px!important}.sidebar nav a[aria-current=page]{background:var(--primary-soft)!important;color:var(--primary)!important}
+.topbar{background:var(--surface)!important;border-bottom:1px solid var(--border)!important}
+.card,.panel,.stat-card{border-color:var(--border)!important;box-shadow:var(--shadow-sm)!important}
+button,.button{border-radius:10px}input,select,textarea{border-radius:10px}
+:root[data-theme=dark] .brand-accent{color:#8ab4ff!important}
